@@ -50,22 +50,7 @@ class MainActivity : AppCompatActivity() {
             Log.i("AudioInfo", "Audio Played")
         }
     }
-/*
-    override fun onStart() {
-        super.onStart()
-        if(!serviceBound) {
-            var storage = StorageUtil(applicationContext)
-            storage.storeAudioIndex(0)
-            storage.storeAudio(audioList)
 
-            Intent(ACTION_PLAY_NEW, null, this, MusicPlayerService::class.java)?.also { intent ->
-                bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-                //intent.action = ACTION_PLAY_NEW
-                startService(intent)
-            }
-        }
-    }
- */
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
         savedInstanceState.putBoolean("ServiceState", serviceBound)
         super.onSaveInstanceState(savedInstanceState)
@@ -114,12 +99,7 @@ class MainActivity : AppCompatActivity() {
                 startService(intent)
                 bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
             }
-            /*
-            Log.i("AudioInfo", "Service not Bound audio played")
-            var playerIntent: Intent = Intent(this, MusicPlayerService::class.java)
-            startService(playerIntent)
-            bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-*/
+
         } else {
             var storage = StorageUtil(applicationContext)
             storage.storeAudioIndex(audioIndex)

@@ -1,16 +1,15 @@
 package com.music.player
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.*
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.AudioManager
 import android.media.MediaMetadata
 import android.media.MediaPlayer
-import android.media.session.MediaController
-import android.media.session.MediaSession
-import android.media.session.MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS
 import android.media.session.MediaSessionManager
 import android.net.Uri
 import android.os.Binder
@@ -18,12 +17,13 @@ import android.os.Build
 import android.os.IBinder
 import android.os.RemoteException
 import android.provider.MediaStore
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationCompat
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -33,8 +33,8 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
     private var mediaPlayer: MediaPlayer? = null
     private lateinit var activeAudio: Audio
     private var mediaSessionManager: MediaSessionManager? = null
-    private var mediaSession: MediaSession? = null
-    private lateinit var transportControls: MediaController.TransportControls
+    private var mediaSession: MediaSessionCompat? = null
+    private lateinit var transportControls: MediaControllerCompat.TransportControls
     private lateinit var audioList: ArrayList<Audio>
     private var resumePosition = 0
     private var activeAudioIndex = 0
@@ -62,7 +62,6 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.i("Service", "onStartCommand called")
         try {
             val storage = StorageUtil(applicationContext)
             audioList = storage.loadAudio()
@@ -197,14 +196,14 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
             return
         mediaSessionManager = getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
 
-        mediaSession = MediaSession(applicationContext, "AudioPlayer")
+        mediaSession = MediaSessionCompat(applicationContext, "AudioPlayer")
         transportControls = mediaSession!!.controller.transportControls
         mediaSession!!.isActive = true
-        mediaSession!!.setFlags(FLAG_HANDLES_TRANSPORT_CONTROLS)
+        mediaSession!!.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
 
         updateMetaData()
 
-        mediaSession!!.setCallback(object: MediaSession.Callback(){
+        mediaSession!!.setCallback(object: MediaSessionCompat.Callback(){
             override fun onPlay(){
                 super.onPlay()
                 resumeMedia()
@@ -251,7 +250,8 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
             e.printStackTrace()
         }
 
-        mediaSession!!.setMetadata(MediaMetadata.Builder()
+        mediaSession!!.setMetadata(
+            MediaMetadataCompat.Builder()
             .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
             .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
             .putString(MediaMetadata.METADATA_KEY_TITLE, activeAudio.title)
@@ -326,7 +326,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         return AudioManager.AUDIOFOCUS_REQUEST_GRANTED == audioManager.abandonAudioFocus(this)
     }
 
-    val broadcastReciever: BroadcastReceiver = object: BroadcastReceiver(){
+    private val broadcastReciever: BroadcastReceiver = object: BroadcastReceiver(){
         @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent != null && intent.action != null) {
@@ -420,7 +420,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     @Suppress("DEPRECATION")
-    fun buildNotification(playbackStatus: PlaybackStatus ) {
+    fun buildNotification(playbackStatus: PlaybackStatus) {
         var notificationAction: Int = android.R.drawable.ic_media_pause
         var playPauseAction: PendingIntent? = null
         when(playbackStatus) {
@@ -440,11 +440,11 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
             largeIcon = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
         } catch (e: FileNotFoundException) {
             e.printStackTrace()
-            //largeIcon = BitmapFactory.decodeResource(applicationContext.getResources(), null);
+            largeIcon = BitmapFactory.decodeResource(applicationContext.resources, android.R.drawable.ic_media_play);
         } catch (e: IOException) {
             e.printStackTrace()
         }
-
+        /*
         var notificationBuilder: NotificationCompat.Builder  = NotificationCompat.Builder(this)
             .setShowWhen(true)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
@@ -459,7 +459,8 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
             .addAction(android.R.drawable.ic_media_previous, "previous", playbackAction(3))
             .addAction(notificationAction, "playPause", playPauseAction)
             .addAction(android.R.drawable.ic_media_next, "next", playbackAction(2))
-        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, notificationBuilder.build())
+        Log.i("Reached", ":::::::::::::::::::::::::::::::::::::::::::::::3")
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, notificationBuilder.build())*/
     }
 
     fun removeNotification() {
