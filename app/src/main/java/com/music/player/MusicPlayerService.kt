@@ -21,6 +21,7 @@ import android.provider.MediaStore
 import android.support.v4.media.session.MediaSessionCompat
 import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import java.io.FileNotFoundException
@@ -31,8 +32,8 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
 
     private var mediaPlayer: MediaPlayer? = null
     private lateinit var activeAudio: Audio
-    private lateinit var mediaSessionManager: MediaSessionManager
-    private lateinit var mediaSession: MediaSession
+    private var mediaSessionManager: MediaSessionManager? = null
+    private var mediaSession: MediaSession? = null
     private lateinit var transportControls: MediaController.TransportControls
     private lateinit var audioList: ArrayList<Audio>
     private var resumePosition = 0
@@ -56,11 +57,12 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         super.onCreate()
 
         callStatelistener()
-        regBroadcastReciever()
+        regBroadcastReceiver()
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.i("Service", "onStartCommand called")
         try {
             val storage = StorageUtil(applicationContext)
             audioList = storage.loadAudio()
@@ -92,7 +94,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         if (intent != null) {
             handleActions(intent)
         }
-        return super.onStartCommand(intent, flags, startId)
+        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -196,13 +198,13 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         mediaSessionManager = getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
 
         mediaSession = MediaSession(applicationContext, "AudioPlayer")
-        transportControls = mediaSession.controller.transportControls
-        mediaSession.isActive = true
-        mediaSession.setFlags(FLAG_HANDLES_TRANSPORT_CONTROLS)
+        transportControls = mediaSession!!.controller.transportControls
+        mediaSession!!.isActive = true
+        mediaSession!!.setFlags(FLAG_HANDLES_TRANSPORT_CONTROLS)
 
         updateMetaData()
 
-        mediaSession.setCallback(object: MediaSession.Callback(){
+        mediaSession!!.setCallback(object: MediaSession.Callback(){
             override fun onPlay(){
                 super.onPlay()
                 resumeMedia()
@@ -249,7 +251,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
             e.printStackTrace()
         }
 
-        mediaSession.setMetadata(MediaMetadata.Builder()
+        mediaSession!!.setMetadata(MediaMetadata.Builder()
             .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
             .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
             .putString(MediaMetadata.METADATA_KEY_TITLE, activeAudio.title)
@@ -333,7 +335,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         }
     }
 
-    fun regBroadcastReciever() {
+    fun regBroadcastReceiver() {
         val intent: IntentFilter = IntentFilter()
         intent.addAction(ACTION_PLAY_NEW)
         intent.addAction(ACTION_PLAY)
@@ -353,6 +355,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
                 activeAudioIndex = StorageUtil(applicationContext).loadAudioIndex()
                 if(activeAudioIndex != -1 && activeAudioIndex < audioList.size) {
                     activeAudio = audioList[activeAudioIndex]
+                    Log.i("AudioInfo", "Audio played inside service")
                 } else {
                     stopSelf()
                 }
@@ -360,7 +363,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
                 mediaPlayer!!.reset()
                 initMediaPlayer()
                 updateMetaData()
-                //buildNotification function call
+                buildNotification(PlaybackStatus.PLAYING)
             }
             ACTION_PLAY -> {
                 transportControls.play()
@@ -445,7 +448,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         var notificationBuilder: NotificationCompat.Builder  = NotificationCompat.Builder(this)
             .setShowWhen(true)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(mediaSession.sessionToken as MediaSessionCompat.Token)
+                .setMediaSession(mediaSession!!.sessionToken as MediaSessionCompat.Token)
                 .setShowActionsInCompactView(0, 1, 2))
             .setLargeIcon(largeIcon)
             .setSmallIcon(android.R.drawable.stat_sys_headset)

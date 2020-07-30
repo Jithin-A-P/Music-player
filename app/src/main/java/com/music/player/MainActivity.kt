@@ -1,5 +1,6 @@
 package com.music.player
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -11,11 +12,11 @@ import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import android.Manifest
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
@@ -28,32 +29,59 @@ class MainActivity : AppCompatActivity() {
     val ACTION_STOP = "com.media.player.ACTION_STOP"
 
     var serviceBound: Boolean = false
-    lateinit var audioList: ArrayList<Audio>
-    lateinit var player: MusicPlayerService
+    var service: MusicPlayerService? = null
+    var audioList = ArrayList<Audio>()
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val btn = findViewById<Button>(R.id.btn)
 
         if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             loadAudio()
+            Log.i("AudioLoaded", "Permission granted and audio loaded")
         } else {
             requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE), 0)
         }
-        
-        loadAudio()
+
+        val btn = findViewById<Button>(R.id.btn)
         btn.setOnClickListener {
-            playAudio(0)
+            playAudio(9)
+            Log.i("AudioInfo", "Audio Played")
         }
     }
+/*
+    override fun onStart() {
+        super.onStart()
+        if(!serviceBound) {
+            var storage = StorageUtil(applicationContext)
+            storage.storeAudioIndex(0)
+            storage.storeAudio(audioList)
+
+            Intent(ACTION_PLAY_NEW, null, this, MusicPlayerService::class.java)?.also { intent ->
+                bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+                //intent.action = ACTION_PLAY_NEW
+                startService(intent)
+            }
+        }
+    }
+ */
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        savedInstanceState.putBoolean("ServiceState", serviceBound)
+        super.onSaveInstanceState(savedInstanceState)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        serviceBound = savedInstanceState.getBoolean("ServiceState")
+    }
+
 
     override fun onDestroy() {
         super.onDestroy()
         if(serviceBound) {
             unbindService(serviceConnection)
-            player.stopSelf()
+            service!!.stopSelf()
         }
     }
 
@@ -78,30 +106,37 @@ class MainActivity : AppCompatActivity() {
 
     fun playAudio(audioIndex: Int) {
         if(!serviceBound) {
-            var storage: StorageUtil = StorageUtil(applicationContext)
+            var storage = StorageUtil(applicationContext)
             storage.storeAudioIndex(audioIndex)
             storage.storeAudio(audioList)
 
+            Intent(this, MusicPlayerService::class.java)?.also { intent ->
+                startService(intent)
+                bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+            }
+            /*
+            Log.i("AudioInfo", "Service not Bound audio played")
             var playerIntent: Intent = Intent(this, MusicPlayerService::class.java)
             startService(playerIntent)
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+*/
         } else {
-            var storage: StorageUtil = StorageUtil(applicationContext)
+            var storage = StorageUtil(applicationContext)
             storage.storeAudioIndex(audioIndex)
 
-            var broadcastIntent: Intent = Intent(ACTION_PLAY_NEW)
+            var broadcastIntent = Intent(ACTION_PLAY_NEW)
             sendBroadcast(broadcastIntent)
         }
     }
 
-    private var serviceConnection: ServiceConnection = object: ServiceConnection {
+    private val serviceConnection: ServiceConnection = object: ServiceConnection {
         override fun onServiceDisconnected(name: ComponentName?) {
             serviceBound = false
         }
 
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            var binder: MusicPlayerService.LocalBinder = service as MusicPlayerService.LocalBinder
-            player = binder.getService();
+        override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
+            var binder: MusicPlayerService.LocalBinder = iBinder as MusicPlayerService.LocalBinder
+            service = binder.getService();
             serviceBound = true
             Toast.makeText(applicationContext, "Service bound", Toast.LENGTH_SHORT).show()
         }

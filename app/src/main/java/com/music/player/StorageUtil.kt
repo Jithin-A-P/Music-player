@@ -22,8 +22,8 @@ class StorageUtil(var context: Context) {
 
     fun loadAudio(): ArrayList<Audio> {
         preferences = context.getSharedPreferences(STORAGE, Context.MODE_PRIVATE)
-        val gson: Gson = Gson()
-        val json: String? = preferences.getString("audioArrrayList", null)
+        val gson = Gson()
+        val json: String? = preferences.getString("audioArrayList", null)
         val type: Type = object: TypeToken<ArrayList<Audio>>(){}.type
         return gson.fromJson(json, type)
     }
