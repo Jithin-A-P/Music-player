@@ -24,10 +24,13 @@ import android.telephony.PhoneStateListener
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat
 import java.io.FileNotFoundException
 import java.io.IOException
 
-class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener,MediaPlayer.OnInfoListener, MediaPlayer.OnBufferingUpdateListener,
+class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
+    MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener,
+    MediaPlayer.OnInfoListener, MediaPlayer.OnBufferingUpdateListener,
     AudioManager.OnAudioFocusChangeListener {
 
     private var mediaPlayer: MediaPlayer? = null
@@ -55,7 +58,6 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
 
     override fun onCreate() {
         super.onCreate()
-
         callStatelistener()
         regBroadcastReceiver()
     }
@@ -68,10 +70,11 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
             activeAudioIndex = storage.loadAudioIndex()
             if(activeAudioIndex != -1 && activeAudioIndex < audioList.size) {
                 activeAudio = audioList[activeAudioIndex]
+                buildNotification(PlaybackStatus.PLAYING)
             } else {
                 stopSelf()
             }
-        } catch (e: NullPointerException) {
+        } catch(e: NullPointerException) {
             stopSelf()
         }
 
@@ -83,14 +86,13 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
             try {
                 initMediaSession()
                 initMediaPlayer()
-            } catch (e: RemoteException) {
+            } catch(e: RemoteException) {
                 e.printStackTrace()
                 stopSelf()
             }
-            buildNotification(PlaybackStatus.PLAYING)
         }
 
-        if (intent != null) {
+        if(intent != null) {
             handleActions(intent)
         }
         return START_NOT_STICKY
@@ -144,10 +146,10 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
                 if(mediaPlayer!!.isPlaying)
                     mediaPlayer!!.pause()
             }
-           AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-               if(mediaPlayer!!.isPlaying)
-                   mediaPlayer!!.setVolume(0.2f, 0.2f)
-           }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                if(mediaPlayer!!.isPlaying)
+                    mediaPlayer!!.setVolume(0.2f, 0.2f)
+            }
         }
     }
 
@@ -176,7 +178,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
 
     override fun onDestroy() {
         super.onDestroy()
-        if(mediaPlayer != null)  {
+        if(mediaPlayer != null) {
             stopMedia()
             mediaPlayer!!.release()
         }
@@ -185,14 +187,14 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
             telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
 
         removeNotification()
-        unregisterReceiver(broadcastReciever)
+        unregisterReceiver(broadcastReceiver)
         StorageUtil(applicationContext).clearCachedAudioPlaylist()
     }
 
     @Suppress("DEPRECATION")
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun initMediaSession() {
-        if(mediaSessionManager ==  null)
+        if(mediaSessionManager == null)
             return
         mediaSessionManager = getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
 
@@ -203,8 +205,8 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
 
         updateMetaData()
 
-        mediaSession!!.setCallback(object: MediaSessionCompat.Callback(){
-            override fun onPlay(){
+        mediaSession!!.setCallback(object : MediaSessionCompat.Callback() {
+            override fun onPlay() {
                 super.onPlay()
                 resumeMedia()
                 buildNotification(PlaybackStatus.PLAYING)
@@ -239,11 +241,15 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun updateMetaData() {
 
-        val albumArtUri: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), activeAudio.albumId)
+        val albumArtUri: Uri = ContentUris.withAppendedId(
+            Uri.parse("content://media/external/audio/albumart"),
+            activeAudio.albumId
+        )
         var albumArt: Bitmap? = null
 
         try {
-            albumArt = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
+            albumArt =
+                MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
         } catch(e: FileNotFoundException) {
             e.printStackTrace()
         } catch(e: IOException) {
@@ -252,11 +258,12 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
 
         mediaSession!!.setMetadata(
             MediaMetadataCompat.Builder()
-            .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
-            .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
-            .putString(MediaMetadata.METADATA_KEY_TITLE, activeAudio.title)
-            .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, albumArt)
-        .build())
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
+                .putString(MediaMetadata.METADATA_KEY_TITLE, activeAudio.title)
+                .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, albumArt)
+                .build()
+        )
     }
 
     fun playMedia() {
@@ -314,11 +321,15 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
     @Suppress("DEPRECATION")
     fun gainAudioFocus(): Boolean {
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        var result = audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+        var result = audioManager.requestAudioFocus(
+            this,
+            AudioManager.STREAM_MUSIC,
+            AudioManager.AUDIOFOCUS_GAIN
+        )
         if(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             return true
         }
-        return  false
+        return false
     }
 
     @Suppress("DEPRECATION")
@@ -326,10 +337,10 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         return AudioManager.AUDIOFOCUS_REQUEST_GRANTED == audioManager.abandonAudioFocus(this)
     }
 
-    private val broadcastReciever: BroadcastReceiver = object: BroadcastReceiver(){
+    private val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent != null && intent.action != null) {
+            if(intent != null && intent.action != null) {
                 handleActions(intent)
             }
         }
@@ -344,13 +355,13 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         intent.addAction(ACTION_PREVIOUS)
         intent.addAction(ACTION_STOP)
         intent.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
-        registerReceiver(broadcastReciever, intent)
+        registerReceiver(broadcastReceiver, intent)
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun handleActions(intent: Intent) {
         var action: String? = intent.action
-        when (action) {
+        when(action) {
             ACTION_PLAY_NEW -> {
                 activeAudioIndex = StorageUtil(applicationContext).loadAudioIndex()
                 if(activeAudioIndex != -1 && activeAudioIndex < audioList.size) {
@@ -389,7 +400,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
 
     fun callStatelistener() {
         telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        phoneStateListener = object: PhoneStateListener() {
+        phoneStateListener = object : PhoneStateListener() {
             override fun onCallStateChanged(state: Int, phoneNumber: String?) {
 
                 when(state) {
@@ -435,15 +446,39 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         }
 
         var largeIcon: Bitmap? = null
-        var albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), activeAudio.albumId)
+        var albumArtUri = ContentUris.withAppendedId(
+            Uri.parse("content://media/external/audio/albumart"),
+            activeAudio.albumId
+        )
         try {
-            largeIcon = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
-        } catch (e: FileNotFoundException) {
+            largeIcon =
+                MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
+        } catch(e: FileNotFoundException) {
             e.printStackTrace()
-            largeIcon = BitmapFactory.decodeResource(applicationContext.resources, android.R.drawable.ic_media_play);
-        } catch (e: IOException) {
+            largeIcon = BitmapFactory.decodeResource(
+                applicationContext.resources,
+                android.R.drawable.ic_media_play
+            )
+        } catch(e: IOException) {
             e.printStackTrace()
         }
+
+        var notification: Notification = NotificationCompat.Builder(applicationContext)
+            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSession!!.sessionToken)
+                .setShowActionsInCompactView(0, 1, 2))
+            .setLargeIcon(largeIcon)
+            .setContentTitle(activeAudio.title)
+            .setContentText(activeAudio.album)
+            .setContentInfo(activeAudio.artist)
+            .setOngoing(playbackStatus == PlaybackStatus.PLAYING)
+            .addAction(android.R.drawable.ic_media_previous, "previous", playbackAction(3))
+            .addAction(notificationAction, "playPause", playPauseAction)
+            .addAction(android.R.drawable.ic_media_next, "next", playbackAction(2)).build()
+
+        Log.i("Reached", ":::::::::::::::::::::::::::::::::::::::::2")
+        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, notification)
+
         /*
         var notificationBuilder: NotificationCompat.Builder  = NotificationCompat.Builder(this)
             .setShowWhen(true)
@@ -464,7 +499,8 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
     }
 
     fun removeNotification() {
-        var notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        var notificationManager: NotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(NOTIFICATION_ID)
     }
 
@@ -491,7 +527,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,MediaPlay
         return null
     }
 
-    inner class LocalBinder: Binder() {
+    inner class LocalBinder : Binder() {
         fun getService(): MusicPlayerService {
             return this@MusicPlayerService
         }
