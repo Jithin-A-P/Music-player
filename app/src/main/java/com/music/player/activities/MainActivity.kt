@@ -18,6 +18,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.viewpager2.widget.ViewPager2
 import com.music.player.R
 import com.music.player.services.MusicPlayerService
 import com.music.player.utils.Audio
@@ -51,11 +52,12 @@ class MainActivity : AppCompatActivity() {
             requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE), 0)
         }
 
+/*
         val btn = findViewById<Button>(R.id.btn)
         btn.setOnClickListener {
             playAudio(30)
             Log.i("AudioInfo", "Audio Played")
-        }
+        }*/
     }
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
