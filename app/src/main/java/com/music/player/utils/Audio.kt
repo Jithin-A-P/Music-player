@@ -1,4 +1,4 @@
-package com.music.player
+package com.music.player.utils
 
 import java.io.Serializable
 

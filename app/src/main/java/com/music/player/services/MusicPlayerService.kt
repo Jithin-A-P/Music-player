@@ -1,4 +1,4 @@
-package com.music.player
+package com.music.player.services
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,7 +17,6 @@ import android.os.Build
 import android.os.IBinder
 import android.os.RemoteException
 import android.provider.MediaStore
-
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
@@ -27,6 +26,9 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.music.player.utils.Audio
+import com.music.player.utils.PlaybackStatus
+import com.music.player.utils.StorageUtil
 import java.io.FileNotFoundException
 import java.io.IOException
 

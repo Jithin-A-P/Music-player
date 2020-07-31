@@ -1,4 +1,4 @@
-package com.music.player
+package com.music.player.utils
 
 import android.content.Context
 import android.content.SharedPreferences

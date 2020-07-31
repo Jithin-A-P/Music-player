@@ -1,4 +1,4 @@
-package com.music.player
+package com.music.player.activities
 
 import android.Manifest
 import android.content.ComponentName
@@ -18,6 +18,11 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.music.player.R
+import com.music.player.services.MusicPlayerService
+import com.music.player.utils.Audio
+import com.music.player.utils.StorageUtil
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,6 +35,8 @@ class MainActivity : AppCompatActivity() {
 
     var serviceBound: Boolean = false
     var service: MusicPlayerService? = null
+
+
     var audioList = ArrayList<Audio>()
 
     @RequiresApi(Build.VERSION_CODES.M)
