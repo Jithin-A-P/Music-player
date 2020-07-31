@@ -485,9 +485,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         }
 
         with(NotificationManagerCompat.from(this)){
-            notificationManager.notify(NOTIFICATION_CHANNEL_ID, NOTIFICATION_ID, notificationBuilder.build())
-            //notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
-            Log.i("Reached", "::::::::::::::::::::::::::::::::::::::::::::::::::::::2")
+            notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
         }
     }
 
