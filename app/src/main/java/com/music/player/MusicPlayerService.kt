@@ -1,6 +1,6 @@
 package com.music.player
 
-import android.app.Notification
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -17,6 +17,7 @@ import android.os.Build
 import android.os.IBinder
 import android.os.RemoteException
 import android.provider.MediaStore
+
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
@@ -25,6 +26,7 @@ import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -48,13 +50,13 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
     private lateinit var phoneStateListener: PhoneStateListener
 
     private val NOTIFICATION_ID = 101
+    private val NOTIFICATION_CHANNEL_ID = "com.media.player.NOTIFICATION"
     private val ACTION_PLAY = "com.media.player.ACTION_PLAY"
     private val ACTION_PLAY_NEW = "com.media.player.ACTION_PLAY_NEW"
     private val ACTION_PAUSE = "com.media.player.ACTION_PAUSE"
     private val ACTION_PREVIOUS = "com.media.player.ACTION_PREVIOUS"
     private val ACTION_NEXT = "com.media.player.ACTION_NEXT"
     private val ACTION_STOP = "com.media.player.ACTION_STOP"
-
 
     override fun onCreate() {
         super.onCreate()
@@ -70,7 +72,6 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
             activeAudioIndex = storage.loadAudioIndex()
             if(activeAudioIndex != -1 && activeAudioIndex < audioList.size) {
                 activeAudio = audioList[activeAudioIndex]
-                buildNotification(PlaybackStatus.PLAYING)
             } else {
                 stopSelf()
             }
@@ -90,12 +91,10 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
                 e.printStackTrace()
                 stopSelf()
             }
+            buildNotification(PlaybackStatus.PLAYING)
         }
-
-        if(intent != null) {
-            handleActions(intent)
-        }
-        return START_NOT_STICKY
+        handleIncomingActions(intent)
+        return super.onStartCommand(intent, flags, startId)
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -194,7 +193,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
     @Suppress("DEPRECATION")
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun initMediaSession() {
-        if(mediaSessionManager == null)
+        if(mediaSessionManager != null)
             return
         mediaSessionManager = getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
 
@@ -255,11 +254,10 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         } catch(e: IOException) {
             e.printStackTrace()
         }
-
         mediaSession!!.setMetadata(
             MediaMetadataCompat.Builder()
                 .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
-                .putString(MediaMetadata.METADATA_KEY_ARTIST, activeAudio.artist)
+                .putString(MediaMetadata.METADATA_KEY_ALBUM, activeAudio.album)
                 .putString(MediaMetadata.METADATA_KEY_TITLE, activeAudio.title)
                 .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, albumArt)
                 .build()
@@ -310,7 +308,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
             activeAudioIndex = audioList.size - 1
             activeAudio = audioList[activeAudioIndex]
         } else {
-            activeAudio = audioList[activeAudioIndex]
+            activeAudio = audioList[--activeAudioIndex]
         }
         StorageUtil(applicationContext).storeAudioIndex(activeAudioIndex)
         stopMedia()
@@ -446,65 +444,63 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         }
 
         var largeIcon: Bitmap? = null
-        var albumArtUri = ContentUris.withAppendedId(
-            Uri.parse("content://media/external/audio/albumart"),
-            activeAudio.albumId
-        )
+        var albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), activeAudio.albumId)
         try {
-            largeIcon =
-                MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
+            largeIcon = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
         } catch(e: FileNotFoundException) {
             e.printStackTrace()
-            largeIcon = BitmapFactory.decodeResource(
-                applicationContext.resources,
-                android.R.drawable.ic_media_play
-            )
+            largeIcon = BitmapFactory.decodeResource(applicationContext.resources, android.R.drawable.ic_media_play)
         } catch(e: IOException) {
             e.printStackTrace()
         }
 
-        var notification: Notification = NotificationCompat.Builder(applicationContext)
+        var notificationBuilder: NotificationCompat.Builder = NotificationCompat.Builder(applicationContext)
+            .setShowWhen(false)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(mediaSession!!.sessionToken)
-                .setShowActionsInCompactView(0, 1, 2))
-            .setLargeIcon(largeIcon)
-            .setContentTitle(activeAudio.title)
-            .setContentText(activeAudio.album)
-            .setContentInfo(activeAudio.artist)
-            .setOngoing(playbackStatus == PlaybackStatus.PLAYING)
-            .addAction(android.R.drawable.ic_media_previous, "previous", playbackAction(3))
-            .addAction(notificationAction, "playPause", playPauseAction)
-            .addAction(android.R.drawable.ic_media_next, "next", playbackAction(2)).build()
-
-        Log.i("Reached", ":::::::::::::::::::::::::::::::::::::::::2")
-        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, notification)
-
-        /*
-        var notificationBuilder: NotificationCompat.Builder  = NotificationCompat.Builder(this)
-            .setShowWhen(true)
-            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(mediaSession!!.sessionToken as MediaSessionCompat.Token)
+                .setMediaSession(mediaSession?.sessionToken)
                 .setShowActionsInCompactView(0, 1, 2))
             .setLargeIcon(largeIcon)
             .setSmallIcon(android.R.drawable.stat_sys_headset)
             .setContentTitle(activeAudio.title)
             .setContentText(activeAudio.album)
             .setContentInfo(activeAudio.artist)
+            .setChannelId(NOTIFICATION_CHANNEL_ID)
             .setOngoing(playbackStatus == PlaybackStatus.PLAYING)
             .addAction(android.R.drawable.ic_media_previous, "previous", playbackAction(3))
             .addAction(notificationAction, "playPause", playPauseAction)
             .addAction(android.R.drawable.ic_media_next, "next", playbackAction(2))
-        Log.i("Reached", ":::::::::::::::::::::::::::::::::::::::::::::::3")
-        (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIFICATION_ID, notificationBuilder.build())*/
+
+        var notificationManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Create the NotificationChannel
+            val name = "Music playback notification"
+            val descriptionText = "This provides controls over media playback"
+            val importance = NotificationManager.IMPORTANCE_LOW
+            val mChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance)
+            mChannel.description = descriptionText
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            notificationManager.createNotificationChannel(mChannel)
+        }
+
+        with(NotificationManagerCompat.from(this)){
+            notificationManager.notify(NOTIFICATION_CHANNEL_ID, NOTIFICATION_ID, notificationBuilder.build())
+            //notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+            Log.i("Reached", "::::::::::::::::::::::::::::::::::::::::::::::::::::::2")
+        }
     }
 
     fun removeNotification() {
         var notificationManager: NotificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if(Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
+            notificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID)
+        }
         notificationManager.cancel(NOTIFICATION_ID)
     }
 
-    fun playbackAction(actionNumber: Int): PendingIntent? {
+    private fun playbackAction(actionNumber: Int): PendingIntent? {
         val playbackAction = Intent(this, MusicPlayerService::class.java)
         when(actionNumber) {
             0 -> {
@@ -525,6 +521,28 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
             }
         }
         return null
+    }
+
+    private fun handleIncomingActions(playbackAction: Intent?) {
+        if(playbackAction == null || playbackAction.action == null) return
+        val actionString = playbackAction.action
+        when {
+            actionString.equals(ACTION_PLAY, ignoreCase = true) -> {
+                transportControls.play()
+            }
+            actionString.equals(ACTION_PAUSE, ignoreCase = true) -> {
+                transportControls.pause()
+            }
+            actionString.equals(ACTION_NEXT, ignoreCase = true) -> {
+                transportControls.skipToNext()
+            }
+            actionString.equals(ACTION_PREVIOUS, ignoreCase = true) -> {
+                transportControls.skipToPrevious()
+            }
+            actionString.equals(ACTION_STOP, ignoreCase = true) -> {
+                transportControls.stop()
+            }
+        }
     }
 
     inner class LocalBinder : Binder() {

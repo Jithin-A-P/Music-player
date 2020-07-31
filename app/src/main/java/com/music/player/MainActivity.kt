@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
 
         val btn = findViewById<Button>(R.id.btn)
         btn.setOnClickListener {
-            playAudio(9)
+            playAudio(30)
             Log.i("AudioInfo", "Audio Played")
         }
     }
@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
             storage.storeAudioIndex(audioIndex)
             storage.storeAudio(audioList)
 
-            Intent(this, MusicPlayerService::class.java)?.also { intent ->
+            Intent(this, MusicPlayerService::class.java).also { intent ->
                 startService(intent)
                 bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
             }
