@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.viewpager2.widget.ViewPager2
 import com.music.player.R
+import com.music.player.adapters.ViewPagerAdapter
 import com.music.player.services.MusicPlayerService
 import com.music.player.utils.Audio
 import com.music.player.utils.StorageUtil
@@ -52,6 +53,8 @@ class MainActivity : AppCompatActivity() {
             requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE), 0)
         }
 
+        val viewPager: ViewPager2 = findViewById(R.id.pager)
+        viewPager.adapter = ViewPagerAdapter(this)
 /*
         val btn = findViewById<Button>(R.id.btn)
         btn.setOnClickListener {
