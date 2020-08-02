@@ -117,7 +117,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
     }
 
     override fun onSeekComplete(p0: MediaPlayer?) {
-        TODO("Not yet implemented")
+        resumeMedia()
     }
 
     override fun onInfo(mediaPlayer: MediaPlayer?, p1: Int, p2: Int): Boolean {
