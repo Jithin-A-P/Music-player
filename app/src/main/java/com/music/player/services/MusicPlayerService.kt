@@ -446,35 +446,46 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         }
 
         var largeIcon: Bitmap? = null
-        var albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), activeAudio.albumId)
+        var albumArtUri = ContentUris.withAppendedId(
+            Uri.parse("content://media/external/audio/albumart"),
+            activeAudio.albumId
+        )
         try {
-            largeIcon = MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
+            largeIcon =
+                MediaStore.Images.Media.getBitmap(applicationContext.contentResolver, albumArtUri)
         } catch(e: FileNotFoundException) {
             e.printStackTrace()
-            largeIcon = BitmapFactory.decodeResource(applicationContext.resources, android.R.drawable.ic_media_play)
+            largeIcon = BitmapFactory.decodeResource(
+                applicationContext.resources,
+                android.R.drawable.ic_media_play
+            )
         } catch(e: IOException) {
             e.printStackTrace()
         }
 
-        var notificationBuilder: NotificationCompat.Builder = NotificationCompat.Builder(applicationContext)
-            .setShowWhen(false)
-            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(mediaSession?.sessionToken)
-                .setShowActionsInCompactView(0, 1, 2))
-            .setLargeIcon(largeIcon)
-            .setSmallIcon(android.R.drawable.stat_sys_headset)
-            .setContentTitle(activeAudio.title)
-            .setContentText(activeAudio.album)
-            .setContentInfo(activeAudio.artist)
-            .setChannelId(NOTIFICATION_CHANNEL_ID)
-            .setOngoing(playbackStatus == PlaybackStatus.PLAYING)
-            .addAction(android.R.drawable.ic_media_previous, "previous", playbackAction(3))
-            .addAction(notificationAction, "playPause", playPauseAction)
-            .addAction(android.R.drawable.ic_media_next, "next", playbackAction(2))
+        var notificationBuilder: NotificationCompat.Builder =
+            NotificationCompat.Builder(applicationContext)
+                .setShowWhen(false)
+                .setStyle(
+                    androidx.media.app.NotificationCompat.MediaStyle()
+                        .setMediaSession(mediaSession?.sessionToken)
+                        .setShowActionsInCompactView(0, 1, 2)
+                )
+                .setLargeIcon(largeIcon)
+                .setSmallIcon(android.R.drawable.stat_sys_headset)
+                .setContentTitle(activeAudio.title)
+                .setContentText(activeAudio.album)
+                .setContentInfo(activeAudio.artist)
+                .setChannelId(NOTIFICATION_CHANNEL_ID)
+                .setOngoing(playbackStatus == PlaybackStatus.PLAYING)
+                .addAction(android.R.drawable.ic_media_previous, "previous", playbackAction(3))
+                .addAction(notificationAction, "playPause", playPauseAction)
+                .addAction(android.R.drawable.ic_media_next, "next", playbackAction(2))
 
-        var notificationManager: NotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        var notificationManager: NotificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the NotificationChannel
             val name = "Music playback notification"
             val descriptionText = "This provides controls over media playback"
@@ -486,7 +497,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
             notificationManager.createNotificationChannel(mChannel)
         }
 
-        with(NotificationManagerCompat.from(this)){
+        with(NotificationManagerCompat.from(this)) {
             notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
         }
     }

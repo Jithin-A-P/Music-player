@@ -19,6 +19,8 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 import com.music.player.R
 import com.music.player.adapters.ViewPagerAdapter
 import com.music.player.services.MusicPlayerService
@@ -46,21 +48,35 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if(ContextCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             loadAudio()
             Log.i("AudioLoaded", "Permission granted and audio loaded")
         } else {
-            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE), 0)
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_PHONE_STATE
+                ), 0
+            )
         }
 
         val viewPager: ViewPager2 = findViewById(R.id.pager)
         viewPager.adapter = ViewPagerAdapter(this)
-/*
-        val btn = findViewById<Button>(R.id.btn)
-        btn.setOnClickListener {
-            playAudio(30)
-            Log.i("AudioInfo", "Audio Played")
-        }*/
+
+        var tabLayout: TabLayout = findViewById(R.id.tabLayout)
+        var tabLayoutMediator = TabLayoutMediator(tabLayout, viewPager,
+            TabLayoutMediator.TabConfigurationStrategy { tab, position ->
+                when(position) {
+                    0 -> tab.text = "Albums"
+                    1 -> tab.text = "Tracks"
+                    2 -> tab.text = "Artists"
+                }
+            })
+        tabLayoutMediator.attach()
     }
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
@@ -89,7 +105,7 @@ class MainActivity : AppCompatActivity() {
         var sortOrder: String? = MediaStore.Audio.Media.TITLE + " ASC"
         var cursor: Cursor? = contentResolver.query(uri, null, selection, null, sortOrder)
         if(cursor != null && cursor.count > 0) {
-            while(cursor.moveToNext()){
+            while(cursor.moveToNext()) {
                 var data = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA))
                 var title = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE))
                 var album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM))
@@ -121,7 +137,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val serviceConnection: ServiceConnection = object: ServiceConnection {
+    private val serviceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceDisconnected(name: ComponentName?) {
             serviceBound = false
         }
