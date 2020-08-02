@@ -14,9 +14,8 @@
         android:layout_height="wrap_content"
         app:tabPaddingTop="15dp"
         app:tabPaddingBottom="8dp"
-        android:background="@color/colorPrimary"
+        android:background="#fff"
         app:layout_constraintTop_toTopOf="parent"
-        app:tabIndicatorHeight="3dp"
         app:tabMode="fixed" />
 
     <androidx.viewpager2.widget.ViewPager2
