@@ -103,19 +103,21 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         return iBinder
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onPrepared(p0: MediaPlayer?) {
         playMedia()
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCompletion(p0: MediaPlayer?) {
-        stopMedia()
-        stopSelf()
+        skipToNext()
     }
 
     override fun onError(p0: MediaPlayer?, p1: Int, p2: Int): Boolean {
         TODO("Not yet implemented")
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onSeekComplete(p0: MediaPlayer?) {
         resumeMedia()
     }
@@ -210,25 +212,21 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
             override fun onPlay() {
                 super.onPlay()
                 resumeMedia()
-                buildNotification(PlaybackStatus.PLAYING)
             }
 
             override fun onPause() {
                 super.onPause()
                 pauseMedia()
-                buildNotification(PlaybackStatus.PAUSED)
             }
 
             override fun onSkipToNext() {
                 super.onSkipToNext()
                 skipToNext()
-                buildNotification(PlaybackStatus.PLAYING)
             }
 
             override fun onSkipToPrevious() {
                 super.onSkipToPrevious()
                 skipToPrev()
-                buildNotification(PlaybackStatus.PLAYING)
             }
 
             override fun onStop() {
@@ -266,9 +264,11 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun playMedia() {
         if(!mediaPlayer!!.isPlaying) {
             mediaPlayer!!.start()
+            buildNotification(PlaybackStatus.PLAYING)
         }
     }
 
@@ -278,20 +278,25 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun pauseMedia() {
         if(mediaPlayer!!.isPlaying) {
             mediaPlayer!!.pause()
             resumePosition = mediaPlayer!!.currentPosition
+            buildNotification(PlaybackStatus.PAUSED)
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun resumeMedia() {
         if(!mediaPlayer!!.isPlaying) {
             mediaPlayer!!.seekTo(resumePosition)
             mediaPlayer!!.start()
+            buildNotification(PlaybackStatus.PLAYING)
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun skipToNext() {
         if(activeAudioIndex == audioList.size - 1) {
             activeAudioIndex = 0
@@ -302,9 +307,11 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         StorageUtil(applicationContext).storeAudioIndex(activeAudioIndex)
         stopMedia()
         mediaPlayer!!.reset()
+        buildNotification(PlaybackStatus.PLAYING)
         initMediaPlayer()
     }
 
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     fun skipToPrev() {
         if(activeAudioIndex == 0) {
             activeAudioIndex = audioList.size - 1
@@ -315,6 +322,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
         StorageUtil(applicationContext).storeAudioIndex(activeAudioIndex)
         stopMedia()
         mediaPlayer!!.reset()
+        buildNotification(PlaybackStatus.PLAYING)
         initMediaPlayer()
     }
 
@@ -401,6 +409,7 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
     fun callStatelistener() {
         telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         phoneStateListener = object : PhoneStateListener() {
+            @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
             override fun onCallStateChanged(state: Int, phoneNumber: String?) {
 
                 when(state) {

@@ -29,7 +29,7 @@ class TrackListAdapter(var audioList: ArrayList<Audio>, var activity: MainActivi
         holder.artist.text = audioList[position].artist
 
         val albumArtUri: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), audioList[position].albumId)
-        Picasso.get().load(albumArtUri).into(holder.alubmArt)
+        Picasso.get().load(albumArtUri).into(holder.albumArt)
 
         holder.listItem.setOnClickListener {
             activity.playAudio(position)
@@ -38,7 +38,7 @@ class TrackListAdapter(var audioList: ArrayList<Audio>, var activity: MainActivi
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val listItem: LinearLayout = itemView.findViewById(R.id.listItemTL)
-        val alubmArt: ImageView = itemView.findViewById(R.id.albumArtTL)
+        val albumArt: ImageView = itemView.findViewById(R.id.albumArtTL)
         val track: TextView = itemView.findViewById(R.id.trackNameTL)
         val album: TextView = itemView.findViewById(R.id.albumNameTL)
         val artist: TextView = itemView.findViewById(R.id.artistNameTL)

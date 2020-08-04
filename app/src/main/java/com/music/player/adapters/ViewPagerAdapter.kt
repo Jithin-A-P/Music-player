@@ -14,12 +14,10 @@ class ViewPagerAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapte
     }
 
     override fun createFragment(position: Int): Fragment {
-        when(position) {
-            0 -> return AlbumFragment()
-            1 -> return TrackFragment()
-            2 -> return ArtistFragment()
+        return when(position) {
+            0 -> AlbumFragment()
+            1 -> TrackFragment()
+            else -> ArtistFragment()
         }
-        return AlbumFragment()
     }
-
 }

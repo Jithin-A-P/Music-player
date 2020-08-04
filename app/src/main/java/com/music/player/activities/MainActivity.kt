@@ -1,10 +1,7 @@
 package com.music.player.activities
 
 import android.Manifest
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
+import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
@@ -13,11 +10,11 @@ import android.os.Bundle
 import android.os.IBinder
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.Button
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.marginBottom
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -26,6 +23,7 @@ import com.music.player.adapters.ViewPagerAdapter
 import com.music.player.services.MusicPlayerService
 import com.music.player.utils.Audio
 import com.music.player.utils.StorageUtil
+import com.squareup.picasso.Picasso
 
 
 class MainActivity : AppCompatActivity() {
@@ -47,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        setSupportActionBar(findViewById(R.id.toolbar))
 
         if(ContextCompat.checkSelfPermission(
                 applicationContext,
@@ -134,6 +133,29 @@ class MainActivity : AppCompatActivity() {
 
             var broadcastIntent = Intent(ACTION_PLAY_NEW)
             sendBroadcast(broadcastIntent)
+        }
+        setupBottomBar(audioIndex)
+    }
+
+    fun setupBottomBar(audioIndex: Int) {
+        val bottomBar: LinearLayout = findViewById(R.id.bottomBar)
+        val albumArt: ImageView = findViewById(R.id.albumArtBottomBar)
+        val track: TextView = findViewById(R.id.trackNameBottomBar)
+        val album: TextView = findViewById(R.id.albumNameBottomBar)
+        val artist: TextView = findViewById(R.id.artistNameBottomBar)
+        val activeAudio = audioList[audioIndex]
+        val viewPager2: ViewPager2 = findViewById(R.id.pager)
+        viewPager2.setPadding(0, 0, 0, 120)
+
+        val albumArtUri: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), activeAudio.albumId)
+        Picasso.get().load(albumArtUri).into(albumArt)
+
+        track.text = activeAudio.title
+        album.text = activeAudio.album
+        artist.text = activeAudio.artist
+
+        bottomBar.setOnClickListener{
+
         }
     }
 
