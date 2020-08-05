@@ -134,29 +134,6 @@ class MainActivity : AppCompatActivity() {
             var broadcastIntent = Intent(ACTION_PLAY_NEW)
             sendBroadcast(broadcastIntent)
         }
-        setupBottomBar(audioIndex)
-    }
-
-    fun setupBottomBar(audioIndex: Int) {
-        val bottomBar: LinearLayout = findViewById(R.id.bottomBar)
-        val albumArt: ImageView = findViewById(R.id.albumArtBottomBar)
-        val track: TextView = findViewById(R.id.trackNameBottomBar)
-        val album: TextView = findViewById(R.id.albumNameBottomBar)
-        val artist: TextView = findViewById(R.id.artistNameBottomBar)
-        val activeAudio = audioList[audioIndex]
-        val viewPager2: ViewPager2 = findViewById(R.id.pager)
-        viewPager2.setPadding(0, 0, 0, 120)
-
-        val albumArtUri: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), activeAudio.albumId)
-        Picasso.get().load(albumArtUri).into(albumArt)
-
-        track.text = activeAudio.title
-        album.text = activeAudio.album
-        artist.text = activeAudio.artist
-
-        bottomBar.setOnClickListener{
-
-        }
     }
 
     private val serviceConnection: ServiceConnection = object : ServiceConnection {
