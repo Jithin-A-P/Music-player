@@ -15,6 +15,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.marginBottom
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -76,6 +77,7 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         tabLayoutMediator.attach()
+
     }
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
@@ -133,6 +135,29 @@ class MainActivity : AppCompatActivity() {
 
             var broadcastIntent = Intent(ACTION_PLAY_NEW)
             sendBroadcast(broadcastIntent)
+        }
+        setUpBottomBar(audioIndex)
+    }
+
+    fun setUpBottomBar(audioIndex: Int) {
+        val track = findViewById<TextView>(R.id.trackNameBottomBar)
+        val album = findViewById<TextView>(R.id.albumNameBottomBar)
+        val artist = findViewById<TextView>(R.id.artistNameBottomBar)
+        val albumArt = findViewById<ImageView>(R.id.albumArtBottomBar)
+        val bottomBar = findViewById<LinearLayout>(R.id.bottomBar)
+        val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
+        trackRecyclerView.setPadding(0, trackRecyclerView.paddingTop, 0, bottomBar.height)
+        val albumArtUri: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), audioList[audioIndex].albumId)
+
+        track.text = audioList[audioIndex].title
+        album.text = audioList[audioIndex].album
+        artist.text = audioList[audioIndex].artist
+        Picasso.get().load(albumArtUri).into(albumArt)
+
+
+        bottomBar.setOnClickListener() {
+            val intent = Intent(this, PlayerActivity::class.java)
+            startActivity(intent)
         }
     }
 
