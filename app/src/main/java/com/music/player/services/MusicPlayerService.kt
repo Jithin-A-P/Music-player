@@ -26,6 +26,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.music.player.R
 import com.music.player.utils.Audio
 import com.music.player.utils.PlaybackStatus
 import com.music.player.utils.StorageUtil
@@ -441,15 +442,15 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     @Suppress("DEPRECATION")
     fun buildNotification(playbackStatus: PlaybackStatus) {
-        var notificationAction: Int = android.R.drawable.ic_media_pause
+        var notificationAction: Int = R.drawable.ic_media_pause_notification
         var playPauseAction: PendingIntent? = null
         when(playbackStatus) {
             PlaybackStatus.PLAYING -> {
-                notificationAction = android.R.drawable.ic_media_pause
+                notificationAction = R.drawable.ic_media_pause_notification
                 playPauseAction = playbackAction(1)
             }
             PlaybackStatus.PAUSED -> {
-                notificationAction = android.R.drawable.ic_media_play
+                notificationAction = R.drawable.ic_media_play_notification
                 playPauseAction = playbackAction(0)
             }
         }
@@ -487,16 +488,16 @@ class MusicPlayerService : Service(), MediaPlayer.OnCompletionListener,
                 .setContentInfo(activeAudio.artist)
                 .setChannelId(NOTIFICATION_CHANNEL_ID)
                 .setOngoing(playbackStatus == PlaybackStatus.PLAYING)
-                .addAction(android.R.drawable.ic_media_previous, "previous", playbackAction(3))
+                .addAction(R.drawable.ic_media_previous_notification, "previous", playbackAction(3))
                 .addAction(notificationAction, "playPause", playPauseAction)
-                .addAction(android.R.drawable.ic_media_next, "next", playbackAction(2))
+                .addAction(R.drawable.ic_media_next_notification, "next", playbackAction(2))
 
         var notificationManager: NotificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the NotificationChannel
-            val name = "Music playback notification"
+            val name = "Music Playback Notification"
             val descriptionText = "This provides controls over media playback"
             val importance = NotificationManager.IMPORTANCE_LOW
             val mChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance)
