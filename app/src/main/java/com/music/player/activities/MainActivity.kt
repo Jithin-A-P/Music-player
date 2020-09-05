@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -120,7 +121,7 @@ class MainActivity : AppCompatActivity() {
 
     fun playAudio(audioIndex: Int) {
         if(!serviceBound) {
-            var storage = StorageUtil(applicationContext)
+            val storage = StorageUtil(applicationContext)
             storage.storeAudioIndex(audioIndex)
             storage.storeAudio(audioList)
 
@@ -146,7 +147,7 @@ class MainActivity : AppCompatActivity() {
         val albumArt = findViewById<ImageView>(R.id.albumArtBottomBar)
         val bottomBar = findViewById<LinearLayout>(R.id.bottomBar)
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
-        trackRecyclerView.setPadding(0, trackRecyclerView.paddingTop, 0, bottomBar.height)
+        trackRecyclerView.setPadding(0, trackRecyclerView.paddingTop, 0, bottomBar.height - 8)
         val albumArtUri: Uri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), audioList[audioIndex].albumId)
 
         track.text = audioList[audioIndex].title
@@ -154,7 +155,7 @@ class MainActivity : AppCompatActivity() {
         artist.text = audioList[audioIndex].artist
         Picasso.get().load(albumArtUri).into(albumArt)
 
-
+        bottomBar.setBackgroundResource(R.drawable.background_with_shadow)
         bottomBar.setOnClickListener() {
             val intent = Intent(this, PlayerActivity::class.java)
             startActivity(intent)
@@ -167,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onServiceConnected(name: ComponentName?, iBinder: IBinder?) {
-            var binder: MusicPlayerService.LocalBinder = iBinder as MusicPlayerService.LocalBinder
+            val binder: MusicPlayerService.LocalBinder = iBinder as MusicPlayerService.LocalBinder
             service = binder.getService();
             serviceBound = true
             Toast.makeText(applicationContext, "Service bound", Toast.LENGTH_SHORT).show()

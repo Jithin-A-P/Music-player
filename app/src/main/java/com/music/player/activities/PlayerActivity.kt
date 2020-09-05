@@ -13,6 +13,5 @@ class PlayerActivity: AppCompatActivity() {
         val toolbar: Toolbar? = findViewById(R.id.playerToolbar)
         setSupportActionBar(toolbar)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-        supportActionBar!!.setDisplayShowHomeEnabled(true)
     }
 }
