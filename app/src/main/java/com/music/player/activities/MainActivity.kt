@@ -145,6 +145,7 @@ class MainActivity : AppCompatActivity() {
         val album = findViewById<TextView>(R.id.albumNameBottomBar)
         val artist = findViewById<TextView>(R.id.artistNameBottomBar)
         val albumArt = findViewById<ImageView>(R.id.albumArtBottomBar)
+        val playPauseButton = findViewById<ImageButton>(R.id.bottomBarButton)
         val bottomBar = findViewById<LinearLayout>(R.id.bottomBar)
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
         trackRecyclerView.setPadding(0, trackRecyclerView.paddingTop, 0, bottomBar.height - 8)
